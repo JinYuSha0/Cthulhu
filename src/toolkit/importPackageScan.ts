@@ -1,3 +1,4 @@
+import path from "path";
 import Context from "../context";
 
 function matchPackage(content: string): string {
@@ -9,11 +10,15 @@ function computeChildFilePath(
   childPackage: string,
   parentFilePath: string
 ): string {
-  const path = rootPackage.replace(/\./g, "/");
+  const _path = path.normalize(rootPackage.replace(/\./g, "/"));
+  const __path = _path.replace(
+    new RegExp(`\\${path.sep}`, "g"),
+    `${path.sep}${path.sep}`
+  );
   const diff = childPackage.replace(rootPackage, "").split(".");
   const result = parentFilePath.replace(
-    new RegExp(`\/${path}\/.*`),
-    `\/${path}${diff.join("/")}.java`
+    new RegExp(`${__path}.*`),
+    path.normalize(`${_path}${diff.join(path.sep)}.java`)
   );
   return result;
 }
