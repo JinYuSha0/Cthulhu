@@ -39,19 +39,17 @@ export function randomLetter() {
     "Z",
   ];
   const index = randomNum(0, 25);
-  return arr[index];
+  return arr[index].toLocaleLowerCase();
 }
 
 export function randomStr(minNum: number, maxNum: number) {
   const l = randomNum(minNum, maxNum);
-  const str = randomLetter() + Math.random().toString(36).slice(2);
+  const str =
+    randomLetter() + Math.random().toString(36).slice(2).toLocaleLowerCase();
   return str.slice(0, l);
 }
 
-export function deduplicationByField<T>(
-  arr: T[],
-  fieldName: keyof T
-): T[] {
+export function deduplicationByField<T>(arr: T[], fieldName: keyof T): T[] {
   const set = new Set();
   const result = [] as unknown as T[];
   arr.forEach((item) => {

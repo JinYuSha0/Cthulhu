@@ -1,5 +1,6 @@
 import path from "path";
 import analysis from "./toolkit/analysis";
+import clearDist from "./toolkit/clearDist";
 import JavaClassTemplate from "./toolkit/javaClassTemplate";
 import memberExpand from "./toolkit/memberExpand";
 import randomClassGenerator from "./toolkit/randomClassGenerator";
@@ -16,6 +17,8 @@ const initConfig: Config = {
 };
 
 async function main(entry: string, config: Config = initConfig) {
+  clearDist();
+
   const context = analysis(entry, null, config);
   const [members, constructs] = memberExpand(context);
 

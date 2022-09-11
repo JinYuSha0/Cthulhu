@@ -16,12 +16,34 @@ export default class JavaClassTemplate {
     this.className = splits[splits.length - 1];
   }
 
+  private delMethodDep(methodMember: MethodMember) {
+    const { content, depends } = methodMember;
+    let c = content;
+    depends.forEach((dep) => {
+      const { content, name } = dep;
+      try {
+        const className = content.match(/^import\s+.*?\.([^\.]*);$/)?.[1];
+
+        if (className !== name) {
+          c = c.replace(
+            new RegExp(`${name}([\\s|\(]+)`, "g"),
+            `${className}.${name}$1`
+          );
+        }
+      } catch {}
+    });
+    return c;
+  }
+
   template() {
     return `
-    ${this.importMember.map((item) => item.content).join("\r\n")}
+    package ${this.classPath};
+    ${Array.from(
+      new Set([...this.importMember.map((item) => item.content)])
+    ).join("\r\n")}
     public class ${this.className} {
         ${this.attrMember.map((item) => item.content).join("\r\n")}
-        ${this.methodMember.map((item) => item.content).join("\r\n")}
+        ${this.methodMember.map(this.delMethodDep).join("\r\n")}
         ${this.classMember.map((item) => item.content).join("\r\n")}
     }`;
   }

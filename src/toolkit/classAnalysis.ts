@@ -16,6 +16,7 @@ import {
   FqnOrRefTypePartFirstCtx,
   VariableDeclaratorIdCtx,
   UnannClassTypeCtx,
+  ClassOrInterfaceTypeToInstantiateCtx,
 } from "java-parser";
 import { deduplicationByField } from "./utils";
 
@@ -88,6 +89,7 @@ export default function analysis(
     private fqnOrRefTypePartFirsts: Set<string> = new Set();
     private formalParameterLists: Set<string> = new Set();
     private unannClassTypes: Set<string> = new Set();
+    private classOrInterfaceTypeToInstantiates: Set<string> = new Set();
 
     constructor(methodMember: MethodMember) {
       super();
@@ -123,14 +125,24 @@ export default function analysis(
       this.unannClassTypes.add(ctx.Identifier[0].image);
     }
 
+    classOrInterfaceTypeToInstantiate(
+      ctx: ClassOrInterfaceTypeToInstantiateCtx,
+      param?: any
+    ) {
+      this.classOrInterfaceTypeToInstantiates.add(ctx.Identifier[0].image);
+    }
+
     // 方法依赖分析
     dependsAnalysis(
       packageName: string,
       imports: ClassMember[],
-      attribute: ClassMember[]
+      attribute: ClassMember[],
+      method: MethodMember[],
+      childClass: ClassMember[]
     ) {
       const impName = imports.map((i) => i.name);
       const dependNames = new Set([
+        ...childClass.map((item) => item.name),
         ...Array.from(this.fqnOrRefTypePartFirsts),
         ...Array.from(this.unannClassTypes).filter((name) =>
           impName.includes(name)
@@ -147,13 +159,53 @@ export default function analysis(
       dependNames.forEach((v) => {
         const importDep = imports.find((item) => item.name === v);
         if (importDep) {
-          this.methodMember.depends.push(importDep);
+          this.methodMember.depends.push({
+            type: "import",
+            isPublic: false,
+            isStatic: false,
+            content: importDep.content,
+            name: importDep.name,
+            ctxRef,
+          });
           return;
         }
 
         const attrDep = attribute.find((item) => item.name === v);
         if (attrDep) {
-          this.methodMember.depends.push(attrDep);
+          this.methodMember.depends.push({
+            type: "import",
+            isPublic: false,
+            isStatic: false,
+            content: `import ${packageName}.${className};`,
+            name: attrDep.name,
+            ctxRef,
+          });
+          return;
+        }
+
+        const methodDep = method.find((item) => item.name === v);
+        if (methodDep) {
+          this.methodMember.depends.push({
+            type: "import",
+            isPublic: false,
+            isStatic: false,
+            content: `import ${packageName}.${className};`,
+            name: methodDep.name,
+            ctxRef,
+          });
+          return;
+        }
+
+        const childClassDep = childClass.find((item) => item.name === v);
+        if (childClassDep) {
+          this.methodMember.depends.push({
+            type: "import",
+            isPublic: false,
+            isStatic: false,
+            content: `import ${packageName}.${className};`,
+            name: childClassDep.name,
+            ctxRef,
+          });
           return;
         }
 
@@ -164,13 +216,12 @@ export default function analysis(
         if (filename) {
           const path = filePath.replace(filename, `${v}.java`);
           if (fs.existsSync(path)) {
-            const content = `import ${packageName}.${v};`;
             this.methodMember.depends.push({
               type: "import",
               isPublic: false,
               isStatic: false,
+              content: `import ${packageName}.${v};`,
               name: v,
-              content,
               ctxRef,
             });
           }
@@ -291,7 +342,13 @@ export default function analysis(
     isAnalyzed = false;
   }
   methodControllers.forEach((controller) =>
-    controller.dependsAnalysis(packageName, importPackage, attribute)
+    controller.dependsAnalysis(
+      packageName,
+      importPackage,
+      attribute,
+      methods,
+      childClass
+    )
   );
   let importPackageConcat: ClassMember[] = [...importPackage];
   methods.map((method) => {
@@ -307,7 +364,9 @@ export default function analysis(
     className,
     isConstruct,
     member: {
-      importPackage: finallyDeps,
+      importPackage: finallyDeps.filter(
+        (item) => !item.content.includes(`${packageName}.${className}`)
+      ),
       childClass,
       methods,
       attribute,
