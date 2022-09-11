@@ -17,14 +17,13 @@ export default class JavaClassTemplate {
   }
 
   private delMethodDep(methodMember: MethodMember) {
-    const { content, depends } = methodMember;
+    const { type, name: _name, content, depends } = methodMember;
     let c = content;
     depends.forEach((dep) => {
       const { content, name } = dep;
       try {
         const className = content.match(/^import\s+.*?\.([^\.]*);$/)?.[1];
-
-        if (className !== name) {
+        if (className !== name && !(type === "method" && _name === name)) {
           c = c.replace(
             new RegExp(`${name}([\\s|\(|>]+)`, "g"),
             `${className}.${name}$1`
