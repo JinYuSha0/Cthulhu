@@ -47,3 +47,17 @@ export function randomStr(minNum: number, maxNum: number) {
   const str = randomLetter() + Math.random().toString(36).slice(2);
   return str.slice(0, l);
 }
+
+export function deduplicationByField<T>(
+  arr: T[],
+  fieldName: keyof T
+): T[] {
+  const set = new Set();
+  const result = [] as unknown as T[];
+  arr.forEach((item) => {
+    if (!set.has(item[fieldName])) {
+      result.push(item);
+    }
+  });
+  return result;
+}

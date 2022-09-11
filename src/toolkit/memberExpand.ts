@@ -11,7 +11,7 @@ export default function memberExpand(
     const classpath = `${packageName}.${className}`;
     if (
       !context.isConstruct &&
-      !context.config.contact_white_list.includes(context.packageName)
+      !context.config.construct_white_list.includes(context.packageName)
     ) {
       context.member.attribute.forEach((item) => {
         table.set(`${classpath}.$${item.name}`, item);
@@ -20,7 +20,7 @@ export default function memberExpand(
         table.set(`${classpath}.$${item.name}`, item);
       });
       context.member.methods.forEach((item) => {
-        table.set(`${classpath}.$${item.name}`, item);
+        table.set(`${classpath}.$$${item.name}`, item);
       });
     } else {
       constructTable.set(context.className, context);
