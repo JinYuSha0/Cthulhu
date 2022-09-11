@@ -26,7 +26,7 @@ export default class JavaClassTemplate {
 
         if (className !== name) {
           c = c.replace(
-            new RegExp(`${name}([\\s|\(]+)`, "g"),
+            new RegExp(`${name}([\\s|\(|>]+)`, "g"),
             `${className}.${name}$1`
           );
         }
