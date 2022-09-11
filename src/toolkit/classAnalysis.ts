@@ -15,8 +15,23 @@ import {
   MethodDeclaratorCtx,
   FqnOrRefTypePartFirstCtx,
   VariableDeclaratorIdCtx,
+  UnannClassTypeCtx,
 } from "java-parser";
 import { deduplicationByField } from "./utils";
+
+export interface ClassMember {
+  type: "import" | "attribute" | "method" | "class";
+  isPublic: boolean;
+  isStatic: boolean;
+  name: string;
+  content: string;
+  ctxRef: { current: Context | null };
+}
+
+export interface MethodMember extends ClassMember {
+  type: "method";
+  depends: ClassMember[];
+}
 
 function modifiersDetect(
   modifiers:
@@ -72,6 +87,7 @@ export default function analysis(
     private variableDeclaratorIds: Set<string> = new Set();
     private fqnOrRefTypePartFirsts: Set<string> = new Set();
     private formalParameterLists: Set<string> = new Set();
+    private unannClassTypes: Set<string> = new Set();
 
     constructor(methodMember: MethodMember) {
       super();
@@ -103,14 +119,24 @@ export default function analysis(
       }
     }
 
+    unannClassType(ctx: UnannClassTypeCtx, param?: any) {
+      this.unannClassTypes.add(ctx.Identifier[0].image);
+    }
+
     // 方法依赖分析
     dependsAnalysis(
       packageName: string,
       imports: ClassMember[],
       attribute: ClassMember[]
     ) {
-      const dependNames = new Set([...Array.from(this.fqnOrRefTypePartFirsts)]);
-      // 零时变量
+      const impName = imports.map((i) => i.name);
+      const dependNames = new Set([
+        ...Array.from(this.fqnOrRefTypePartFirsts),
+        ...Array.from(this.unannClassTypes).filter((name) =>
+          impName.includes(name)
+        ),
+      ]);
+      // 临时变量
       this.variableDeclaratorIds.forEach((v) => {
         dependNames.delete(v);
       });

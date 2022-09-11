@@ -8,6 +8,7 @@ declare global {
     random_class_capacity: [number, number]; // 随机类容量（类包含的方法数量）
     package_white_list: string[];
     construct_white_list: string[];
+    output: string;
   };
 
   export interface ClassMember {
