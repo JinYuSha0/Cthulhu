@@ -13,7 +13,7 @@ function computeChildFilePath(
   const _path = path.normalize(rootPackage.replace(/\./g, "/"));
   const __path = _path.replace(
     new RegExp(`\\${path.sep}`, "g"),
-    `${path.sep}${path.sep}`
+    `\\${path.sep}`
   );
   const diff = childPackage.replace(rootPackage, "").split(".");
   const result = parentFilePath.replace(

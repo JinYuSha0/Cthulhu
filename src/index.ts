@@ -11,8 +11,8 @@ const initConfig: Config = {
   random_package_name_length: [1, 3],
   random_member_name_str_length: [3, 8],
   random_class_capacity: [1, 3],
-  package_white_list: ["com.microle.mara"],
-  construct_white_list: ["com.microle.mara.entity"],
+  package_white_list: ["com.lending.loan.cashx"],
+  construct_white_list: ["com.lending.loan.cashx.entity"],
   output: path.join(__dirname, "../dist"),
 };
 
@@ -93,5 +93,5 @@ async function main(entry: string, config: Config = initConfig) {
 }
 
 main(
-  "E:\\MyProject\\favorloan\\android\\app\\src\\main\\java\\com\\microle\\mara\\BizNativeModule.java"
+  "/Users/shaojinyu/workplace/cashx/android/app/src/main/java/com/lending/loan/cashx/BizNativeModule.java"
 );
