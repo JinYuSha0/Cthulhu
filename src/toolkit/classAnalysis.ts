@@ -62,7 +62,8 @@ export default function analysis(
   let isAnalyzed = true;
   let packageName = parentPackagePath ?? "";
   let className =
-    filePath
+    path
+      .normalize(filePath)
       .match(new RegExp(`^.*?\\${path.sep}([^\\${path.sep}]*)$`))?.[1]
       ?.replace(".java", "") ?? "";
   if (childClassCst) {
@@ -160,7 +161,7 @@ export default function analysis(
     ) {
       const impName = imports.map((i) => i.name);
       const dependNames = new Set([
-        ...childClass.map((item) => item.name),
+        // ...childClass.map((item) => item.name),
         ...Array.from(this.fqnOrRefTypePartFirsts),
         ...Array.from(this.unannClassTypes).filter((name) =>
           impName.includes(name)
