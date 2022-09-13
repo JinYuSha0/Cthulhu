@@ -29,10 +29,11 @@ function modifiersDetect(
     | MethodModifierCstNode[]
     | FieldModifierCstNode[]
     | undefined
-): [boolean, boolean] {
+): [boolean, boolean, string[]] {
   let isPublic = false,
-    isStatic = false;
-  if (!modifiers) return [isPublic, isStatic];
+    isStatic = false,
+    annotation = [];
+  if (!modifiers) return [isPublic, isStatic, []];
   for (let i = 0; i < modifiers.length; i++) {
     if (!!modifiers[i].children.Public) {
       isPublic = true;
@@ -40,8 +41,14 @@ function modifiersDetect(
     if (!!modifiers[i].children.Static) {
       isStatic = true;
     }
+    if (modifiers[i].children.annotation) {
+      annotation.push(
+        modifiers[i].children.annotation[0].children.typeName[0].children
+          .Identifier[0].image
+      );
+    }
   }
-  return [isPublic, isStatic];
+  return [isPublic, isStatic, annotation];
 }
 
 export default function analysis(
@@ -49,10 +56,11 @@ export default function analysis(
   parent: Context,
   config: Config,
   ctxRef: { current: Context | null },
-  childClassCst?: CstNode
+  childClassCst?: CstNode,
+  parentPackagePath?: string
 ): Context {
   let isAnalyzed = true;
-  let packageName = "";
+  let packageName = parentPackagePath ?? "";
   let className =
     filePath
       .match(new RegExp(`^.*?\\${path.sep}([^\\${path.sep}]*)$`))?.[1]
@@ -62,7 +70,7 @@ export default function analysis(
       const childClassName = (
         childClassCst.children.normalClassDeclaration?.[0] as any
       )?.children?.typeIdentifier?.[0].children?.Identifier?.[0].image;
-      className += `.$${childClassName}`;
+      className = `${className}.${childClassName}`;
     } catch {}
   }
   let isConstruct = false;
@@ -299,7 +307,10 @@ export default function analysis(
         // 静态类匹配
         if (ctx.classDeclaration) {
           const modifiers = ctx.classDeclaration?.[0]?.children.classModifier;
-          const [isPublic, isStatic] = modifiersDetect(modifiers);
+          const [isPublic, isStatic, annotation] = modifiersDetect(modifiers);
+          const modifiersDep = importPackage.filter(({ name }) =>
+            annotation.includes(name)
+          );
           const name =
             ctx.classDeclaration?.[0]?.children.normalClassDeclaration?.[0]
               .children.typeIdentifier?.[0].children.Identifier[0].image;
@@ -312,8 +323,13 @@ export default function analysis(
               parent,
               config,
               ctxRef,
-              ctx.classDeclaration?.[0]
+              ctx.classDeclaration?.[0],
+              packageName
             );
+            context.member.importPackage = [
+              ...context.member.importPackage,
+              ...modifiersDep,
+            ];
             childClass.push({
               type: "childClass",
               isPublic,

@@ -35,6 +35,12 @@ export default class JavaClassTemplate {
   }
 
   template() {
+    this.classMember.forEach((classMember) => {
+      this.importMember = [
+        ...this.importMember,
+        ...classMember.context.member.importPackage,
+      ];
+    });
     return `
     package ${this.classPath};
     ${Array.from(

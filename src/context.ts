@@ -7,8 +7,8 @@ interface Attrs {
   className: string; // 类名
   member: {
     importPackage: ClassMember[];
-    childClass: ClassMember[];
-    methods: ClassMember[];
+    childClass: ChildClassMemeber[];
+    methods: MethodMember[];
     attribute: ClassMember[];
   };
   config: Config; // 根中的配置
@@ -23,8 +23,8 @@ export default class Context {
   public className: string;
   public member: {
     importPackage: ClassMember[];
-    childClass: ClassMember[];
-    methods: ClassMember[];
+    childClass: ChildClassMemeber[];
+    methods: MethodMember[];
     attribute: ClassMember[];
   };
   public config: Config;
