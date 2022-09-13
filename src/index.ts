@@ -70,8 +70,8 @@ async function main(entry: string, config: Config = initConfig) {
       case "attribute":
         template.addAttr(value.member);
         break;
-      case "class":
-        template.addClass(value.member);
+      case "childClass":
+        template.addClass(value.member as ChildClassMemeber);
         break;
       case "method":
         const methodMember = value.member as MethodMember;

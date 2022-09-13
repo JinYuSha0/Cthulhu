@@ -9,10 +9,7 @@ export default function analysis(
 ): Context {
   const contextRef: { current: Context | null } = { current: null };
   const context = new Context({
-    parent,
-    filePath,
-    config,
-    ...classAnalysis(filePath, contextRef),
+    ...classAnalysis(filePath, parent, config, contextRef),
   });
   contextRef.current = context;
 

@@ -28,7 +28,7 @@ export default class Context {
     attribute: ClassMember[];
   };
   public config: Config;
-  public children: Context[] = [];
+  public children?: Context[] = [];
 
   constructor(attrs: Attrs) {
     this.isAnalyzed = attrs.isAnalyzed;

@@ -7,7 +7,7 @@ export default class JavaClassTemplate {
   public importMember: ClassMember[] = [];
   public attrMember: ClassMember[] = [];
   public methodMember: MethodMember[] = [];
-  public classMember: ClassMember[] = [];
+  public classMember: ChildClassMemeber[] = [];
 
   constructor(classPath: string, config: Config) {
     this.config = config;
@@ -63,7 +63,7 @@ export default class JavaClassTemplate {
     this.methodMember.push(method);
   }
 
-  addClass(clazz: ClassMember) {
+  addClass(clazz: ChildClassMemeber) {
     this.classMember.push(clazz);
   }
 

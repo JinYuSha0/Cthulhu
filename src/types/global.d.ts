@@ -12,7 +12,7 @@ declare global {
   };
 
   export interface ClassMember {
-    type: "import" | "attribute" | "method" | "class";
+    type: "import" | "attribute" | "method" | "class" | "childClass";
     isPublic: boolean;
     isStatic: boolean;
     name: string;
@@ -23,6 +23,11 @@ declare global {
   export interface MethodMember extends ClassMember {
     type: "method";
     depends: ClassMember[];
+  }
+
+  export interface ChildClassMemeber extends ClassMember {
+    type: "childClass";
+    context: Context;
   }
 }
 

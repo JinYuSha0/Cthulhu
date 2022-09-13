@@ -17,22 +17,11 @@ import {
   VariableDeclaratorIdCtx,
   UnannClassTypeCtx,
   ClassOrInterfaceTypeToInstantiateCtx,
+  MethodModifierCtx,
+  CstNode,
+  VariableModifierCtx,
 } from "java-parser";
 import { deduplicationByField } from "./utils";
-
-export interface ClassMember {
-  type: "import" | "attribute" | "method" | "class";
-  isPublic: boolean;
-  isStatic: boolean;
-  name: string;
-  content: string;
-  ctxRef: { current: Context | null };
-}
-
-export interface MethodMember extends ClassMember {
-  type: "method";
-  depends: ClassMember[];
-}
 
 function modifiersDetect(
   modifiers:
@@ -57,29 +46,29 @@ function modifiersDetect(
 
 export default function analysis(
   filePath: string,
-  ctxRef: { current: Context | null }
-): {
-  isAnalyzed: boolean;
-  packageName: string;
-  className: string;
-  isConstruct: boolean;
-  member: {
-    importPackage: ClassMember[];
-    childClass: ClassMember[];
-    methods: MethodMember[];
-    attribute: ClassMember[];
-  };
-} {
+  parent: Context,
+  config: Config,
+  ctxRef: { current: Context | null },
+  childClassCst?: CstNode
+): Context {
   let isAnalyzed = true;
   let packageName = "";
   let className =
     filePath
       .match(new RegExp(`^.*?\\${path.sep}([^\\${path.sep}]*)$`))?.[1]
       ?.replace(".java", "") ?? "";
+  if (childClassCst) {
+    try {
+      const childClassName = (
+        childClassCst.children.normalClassDeclaration?.[0] as any
+      )?.children?.typeIdentifier?.[0].children?.Identifier?.[0].image;
+      className += `.$${childClassName}`;
+    } catch {}
+  }
   let isConstruct = false;
   const filecontent = fileRead(filePath);
   const importPackage: ClassMember[] = [];
-  const childClass: ClassMember[] = [];
+  const childClass: ChildClassMemeber[] = [];
   const methods: MethodMember[] = [];
   const attribute: ClassMember[] = [];
   class MethodController extends BaseJavaCstVisitorWithDefaults {
@@ -90,6 +79,8 @@ export default function analysis(
     private formalParameterLists: Set<string> = new Set();
     private unannClassTypes: Set<string> = new Set();
     private classOrInterfaceTypeToInstantiates: Set<string> = new Set();
+    private methodModifiers: Set<string> = new Set();
+    private variableModifiers: Set<string> = new Set();
 
     constructor(methodMember: MethodMember) {
       super();
@@ -132,6 +123,25 @@ export default function analysis(
       this.classOrInterfaceTypeToInstantiates.add(ctx.Identifier[0].image);
     }
 
+    methodModifier(ctx: MethodModifierCtx, param?: any) {
+      if (ctx.annotation?.length) {
+        ctx.annotation.forEach((item) => {
+          this.methodModifiers.add(
+            item.children.typeName[0].children.Identifier[0].image
+          );
+        });
+      }
+    }
+
+    variableModifier(ctx: VariableModifierCtx, param?: any) {
+      const image =
+        ctx.annotation?.[0].children.typeName?.[0].children.Identifier?.[0]
+          .image;
+      if (image) {
+        this.variableModifiers.add(image);
+      }
+    }
+
     // 方法依赖分析
     dependsAnalysis(
       packageName: string,
@@ -147,6 +157,11 @@ export default function analysis(
         ...Array.from(this.unannClassTypes).filter((name) =>
           impName.includes(name)
         ),
+        ...Array.from(this.classOrInterfaceTypeToInstantiates).filter((name) =>
+          impName.includes(name)
+        ),
+        ...Array.from(this.methodModifiers),
+        ...Array.from(this.variableModifiers),
       ]);
       // 临时变量
       this.variableDeclaratorIds.forEach((v) => {
@@ -292,13 +307,21 @@ export default function analysis(
             ctx.classDeclaration?.[0].location ?? {};
           if (name && endOffset) {
             const content = filecontent.slice(startOffset, endOffset + 1);
+            const context = analysis(
+              filePath,
+              parent,
+              config,
+              ctxRef,
+              ctx.classDeclaration?.[0]
+            );
             childClass.push({
-              type: "class",
+              type: "childClass",
               isPublic,
               isStatic,
               name,
               content,
               ctxRef,
+              context,
             });
           }
         }
@@ -337,7 +360,7 @@ export default function analysis(
 
     const controller = new Controller();
     const cst = parse(filecontent);
-    controller.visit(cst);
+    controller.visit(childClassCst ?? cst);
   } else {
     isAnalyzed = false;
   }
@@ -361,6 +384,9 @@ export default function analysis(
   return {
     isAnalyzed,
     packageName,
+    parent,
+    filePath,
+    config,
     className,
     isConstruct,
     member: {
