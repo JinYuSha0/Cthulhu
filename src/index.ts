@@ -11,8 +11,10 @@ const initConfig: Config = {
   random_package_name_length: [1, 3],
   random_member_name_str_length: [3, 8],
   random_class_capacity: [1, 3],
+  root_package: "com.lending.loan.cashx",
   package_white_list: ["com.lending.loan.cashx"],
   construct_white_list: ["com.lending.loan.cashx.entity"],
+  class_white_list: ["com.lending.loan.cashx.utils.EncryptJNI"],
   output: path.join(__dirname, "../dist"),
 };
 

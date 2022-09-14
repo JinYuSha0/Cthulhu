@@ -21,11 +21,12 @@ export default class JavaClassTemplate {
     let c = content;
     depends.forEach((dep) => {
       const { content, name } = dep;
+
       try {
         const className = content.match(/^import\s+.*?\.([^\.]*);$/)?.[1];
         if (className !== name && !(type === "method" && _name === name)) {
           c = c.replace(
-            new RegExp(`${name}([\\s|\(|>]+)`, "g"),
+            new RegExp(`${name}([\\s|\(|>|\.]+)`, "g"),
             `${className}.${name}$1`
           );
         }
@@ -42,7 +43,7 @@ export default class JavaClassTemplate {
       ];
     });
     return `
-    package ${this.classPath};
+    package ${this.config.root_package}.${this.classPath};
     ${Array.from(
       new Set([...this.importMember.map((item) => item.content)])
     ).join("\r\n")}

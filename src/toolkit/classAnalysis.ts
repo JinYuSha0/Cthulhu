@@ -86,6 +86,7 @@ export default function analysis(
     private variableDeclaratorIds: Set<string> = new Set();
     private fqnOrRefTypePartFirsts: Set<string> = new Set();
     private formalParameterLists: Set<string> = new Set();
+    private formalParameterLists2: Set<string> = new Set();
     private unannClassTypes: Set<string> = new Set();
     private classOrInterfaceTypeToInstantiates: Set<string> = new Set();
     private methodModifiers: Set<string> = new Set();
@@ -103,8 +104,14 @@ export default function analysis(
       ctx.formalParameterList?.[0].children.formalParameter.forEach((item) => {
         const image =
           item.children.variableParaRegularParameter?.[0].children
+            .unannType?.[0].children.unannReferenceType?.[0].children
+            .unannClassOrInterfaceType?.[0].children.unannClassType?.[0]
+            .children.Identifier?.[0].image;
+        const image2 =
+          item.children.variableParaRegularParameter?.[0].children
             .variableDeclaratorId?.[0].children.Identifier?.[0].image;
         if (image) this.formalParameterLists.add(image);
+        if (image2) this.formalParameterLists2.add(image2);
       });
     }
 
@@ -157,11 +164,11 @@ export default function analysis(
       imports: ClassMember[],
       attribute: ClassMember[],
       method: MethodMember[],
-      childClass: ClassMember[]
+      childClass: ChildClassMemeber[]
     ) {
       const impName = imports.map((i) => i.name);
       const dependNames = new Set([
-        // ...childClass.map((item) => item.name),
+        ...childClass.map((item) => item.name),
         ...Array.from(this.fqnOrRefTypePartFirsts),
         ...Array.from(this.unannClassTypes).filter((name) =>
           impName.includes(name)
@@ -171,13 +178,14 @@ export default function analysis(
         ),
         ...Array.from(this.methodModifiers),
         ...Array.from(this.variableModifiers),
+        ...Array.from(this.formalParameterLists),
       ]);
       // 临时变量
       this.variableDeclaratorIds.forEach((v) => {
         dependNames.delete(v);
       });
       // 函数入参变量
-      this.formalParameterLists.forEach((v) => {
+      this.formalParameterLists2.forEach((v) => {
         dependNames.delete(v);
       });
       dependNames.forEach((v) => {
@@ -226,7 +234,7 @@ export default function analysis(
             type: "import",
             isPublic: false,
             isStatic: false,
-            content: `import ${packageName}.${className}.${childClassDep.name};`,
+            content: `import ${packageName}.${className};`,
             name: childClassDep.name,
             ctxRef,
           });

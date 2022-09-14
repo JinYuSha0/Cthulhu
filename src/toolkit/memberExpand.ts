@@ -12,6 +12,7 @@ export default function memberExpand(
     if (
       !context.isConstruct &&
       !context.config.construct_white_list.includes(context.packageName) &&
+      !context.config.class_white_list.includes(classpath) &&
       context.member.attribute.filter((attr) => !attr.isStatic).length === 0 &&
       context.member.methods.filter((attr) => !attr.isStatic).length === 0
     ) {

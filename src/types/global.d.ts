@@ -6,8 +6,10 @@ declare global {
     random_package_name_length: [number, number]; // 随机包名长度 root.{abc}
     random_member_name_str_length: [number, number]; // 随机成员名长度 public static void {xxxxxxxx}
     random_class_capacity: [number, number]; // 随机类容量（类包含的方法数量）
+    root_package: string;
     package_white_list: string[];
     construct_white_list: string[];
+    class_white_list: string[];
     output: string;
   };
 
