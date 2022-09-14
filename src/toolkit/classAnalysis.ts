@@ -226,7 +226,7 @@ export default function analysis(
             type: "import",
             isPublic: false,
             isStatic: false,
-            content: `import ${packageName}.${className};`,
+            content: `import ${packageName}.${className}.${childClassDep.name};`,
             name: childClassDep.name,
             ctxRef,
           });
