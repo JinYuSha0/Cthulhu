@@ -1,4 +1,5 @@
 import Context from "../context";
+import { randomStr } from "./utils";
 
 const table: Map<string, ClassMember> = new Map();
 const constructTable: Map<string, Context> = new Map();
@@ -9,6 +10,13 @@ export default function memberExpand(
   if (context.isAnalyzed) {
     const { packageName, className } = context;
     const classpath = `${packageName}.${className}`;
+    function dealItem(item: ClassMember) {
+      item.newName = randomStr(
+        context.config.random_member_name_str_length[0],
+        context.config.random_member_name_str_length[1]
+      );
+      table.set(`${classpath}.${item.name}`, item);
+    }
     if (
       !context.isConstruct &&
       !context.config.construct_white_list.includes(context.packageName) &&
@@ -16,15 +24,9 @@ export default function memberExpand(
       context.member.attribute.filter((attr) => !attr.isStatic).length === 0 &&
       context.member.methods.filter((attr) => !attr.isStatic).length === 0
     ) {
-      context.member.attribute.forEach((item) => {
-        table.set(`${classpath}.$${item.name}`, item);
-      });
-      context.member.childClass.forEach((item) => {
-        table.set(`${classpath}.$${item.name}`, item);
-      });
-      context.member.methods.forEach((item) => {
-        table.set(`${classpath}.$${item.name}`, item);
-      });
+      context.member.attribute.forEach(dealItem);
+      context.member.childClass.forEach(dealItem);
+      context.member.methods.forEach(dealItem);
     } else {
       constructTable.set(context.className, context);
     }

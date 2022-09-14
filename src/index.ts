@@ -1,3 +1,4 @@
+import { writeFileSync } from "fs";
 import path from "path";
 import analysis from "./toolkit/analysis";
 import clearDist from "./toolkit/clearDist";
@@ -15,7 +16,7 @@ const initConfig: Config = {
   package_white_list: ["com.lending.loan.cashx"],
   construct_white_list: ["com.lending.loan.cashx.entity"],
   class_white_list: ["com.lending.loan.cashx.utils.EncryptJNI"],
-  output: path.join(__dirname, "../dist"),
+  output: `/Users/shaojinyu/workplace/cashx/android/app/src/main/java/com/lending/loan/cashx`,
 };
 
 async function main(entry: string, config: Config = initConfig) {
@@ -25,6 +26,7 @@ async function main(entry: string, config: Config = initConfig) {
   const [members, constructs] = memberExpand(context);
 
   const table: Map<string, { class: string; member: ClassMember }> = new Map();
+  const map: Map<string, string> = new Map();
 
   const memberTable: Map<string, { num: number; members: ClassMember[] }> =
     new Map();
@@ -43,6 +45,10 @@ async function main(entry: string, config: Config = initConfig) {
           members: [classMember],
         });
         table.set(name, { class: randomName, member: classMember });
+        map.set(
+          name,
+          `${config.root_package}.${randomName}.${classMember.newName}`
+        );
         return;
       }
       const { num, members } = value;
@@ -52,6 +58,10 @@ async function main(entry: string, config: Config = initConfig) {
           members: [...members, classMember],
         });
         table.set(name, { class: randomName, member: classMember });
+        map.set(
+          name,
+          `${config.root_package}.${randomName}.${classMember.newName}`
+        );
       } else {
         walk(classMember);
       }
@@ -62,7 +72,10 @@ async function main(entry: string, config: Config = initConfig) {
   const classTable = new Map<string, JavaClassTemplate>();
   table.forEach((value, key) => {
     if (!classTable.has(value.class)) {
-      classTable.set(value.class, new JavaClassTemplate(value.class, config));
+      classTable.set(
+        value.class,
+        new JavaClassTemplate(value.class, map, config)
+      );
     }
     const template = classTable.get(value.class)!;
     switch (value.member.type) {
@@ -73,7 +86,9 @@ async function main(entry: string, config: Config = initConfig) {
         template.addAttr(value.member);
         break;
       case "childClass":
-        template.addClass(value.member as ChildClassMemeber);
+        const classMember = value.member as ChildClassMemeber;
+        template.addClass(classMember);
+        template.addImport(classMember.context.member.importPackage);
         break;
       case "method":
         const methodMember = value.member as MethodMember;
@@ -83,6 +98,11 @@ async function main(entry: string, config: Config = initConfig) {
     }
   });
   classTable.forEach((v) => v.create());
+
+  writeFileSync(
+    path.join(config.output, "map.json"),
+    JSON.stringify(Object.fromEntries(map), null, 2)
+  );
 
   // const constructTable: Map<string, Context | null> = new Map();
   // const constructsClasses = randomClassGenerator(constructs.size, config, true);

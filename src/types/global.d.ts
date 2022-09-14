@@ -20,6 +20,9 @@ declare global {
     name: string;
     content: string;
     ctxRef: { current: Context | null };
+    depends?: ClassMember[];
+    context?: Context;
+    newName?: string;
   }
 
   export interface MethodMember extends ClassMember {
@@ -30,6 +33,10 @@ declare global {
   export interface ChildClassMemeber extends ClassMember {
     type: "childClass";
     context: Context;
+  }
+
+  export interface NewClassMember extends ClassMember {
+    newName: string;
   }
 }
 
