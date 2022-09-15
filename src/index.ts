@@ -1,4 +1,3 @@
-import { writeFileSync } from "fs";
 import path from "path";
 import analysis from "./toolkit/analysis";
 import clearDist from "./toolkit/clearDist";
@@ -6,6 +5,7 @@ import JavaClassTemplate from "./toolkit/javaClassTemplate";
 import memberExpand from "./toolkit/memberExpand";
 import randomClassGenerator from "./toolkit/randomClassGenerator";
 import { randomNum } from "./toolkit/utils";
+import { writeFileSync } from "fs";
 
 const initConfig: Config = {
   random_package_folder_deep: [1, 3],
@@ -16,6 +16,7 @@ const initConfig: Config = {
   package_white_list: ["com.lending.loan.cashx"],
   construct_white_list: ["com.lending.loan.cashx.entity"],
   class_white_list: ["com.lending.loan.cashx.utils.EncryptJNI"],
+  // output: path.join(__dirname, "../dist"),
   output: `/Users/shaojinyu/workplace/cashx/android/app/src/main/java/com/lending/loan/cashx`,
 };
 

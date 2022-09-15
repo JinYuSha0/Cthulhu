@@ -135,7 +135,7 @@ export default class JavaClassTemplate {
     const split = this.classPath.split(".");
     const classPath = split.slice(0, split.length - 1).join(".");
     return `
-    package ${this.config.root_package}.${classPath};
+    package ${this.config.root_package}${!!classPath ? "." : ""}${classPath};
     ${this.delImportDep(this.importMember)}
     public class ${this.className} {
         ${this.attrMember.map(this.attrRename).join("\r\n")}

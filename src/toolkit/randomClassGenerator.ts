@@ -1,5 +1,7 @@
 import { randomNum, randomStr } from "./utils";
 
+const classNameTable: Set<string> = new Set();
+
 export default function (
   size: number,
   config: Config,
@@ -12,7 +14,7 @@ export default function (
         Math.ceil(size / config.random_class_capacity[1])
       );
   const result: string[] = [];
-  for (let i = 0; i < classSize; i++) {
+  function gen() {
     let classPath = "";
     const deep = randomNum(...config.random_package_folder_deep);
     if (deep > 1) {
@@ -24,7 +26,21 @@ export default function (
     } else {
       classPath = randomStr(...config.random_package_name_length);
     }
-    result.push(classPath);
+    return classPath;
+  }
+  for (let i = 0; i < classSize; i++) {
+    function walk() {
+      const classPath = gen();
+      const classPathSplit = classPath.split(".");
+      const lastName = classPathSplit[classPathSplit.length - 1];
+      if (classNameTable.has(lastName)) {
+        walk();
+      } else {
+        result.push(classPath);
+        classNameTable.add(lastName);
+      }
+    }
+    walk();
   }
   return result;
 }
